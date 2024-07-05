@@ -19,3 +19,21 @@ class tickets(Base):
         self.ticketCount = ticketCount
 
 
+if not os.path.exists('wroclaw.db'):
+    engine = create_engine('sqlite:///wroclaw.db')
+    Base.metadata.create_all(bind=engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    file = pandas.read_csv("sprzedaz-biletow-i-iii-2024-fixed.csv", delimiter=';')
+
+    file = file[file[file.columns[0]].str.contains('RAZEM')]
+    file.reset_index(drop=True, inplace=True)
+    for index, row in file.iterrows():
+        ticket = tickets(
+            ticketType=row[file.columns[0]],
+            ticketCount=int(row[file.columns[1]].replace(" ", "")),
+            ticketValue=int(row[file.columns[2]].replace(" ", ""))
+        )
+        session.add(ticket)
+    session.commit()
